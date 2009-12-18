@@ -33,7 +33,7 @@ module NoFuzz
           word = ' ' + i.send(f)
           (0..word.length-3).each do |idx|
             tg = word[idx,3].downcase # Force normalization by downcasing for
-                                      # now - should be overridable by the user
+            # now - should be overridable by the user
             trigram_model.create(:tg => tg, fuzzy_ref_id => i.id)
           end
         end
@@ -48,23 +48,23 @@ module NoFuzz
     def fuzzy_find(word, limit = 0)
       fuzzy_ref_id = self.instance_variable_get(:@fuzzy_ref_id)
       trigram_model = self.instance_variable_get(:@fuzzy_trigram_model)
-      fields = self.instance_variable_get(:@fuzzy_fields)
+      #fields = self.instance_variable_get(:@fuzzy_fields)
 
       word = ' ' + word + ' '
       trigrams = (0..word.length-3).collect { |idx| word[idx,3] }
 
       # ordered hash of package_id => score pairs
       trigram_groups = trigram_model.sum(:score, :conditions => [ "tg IN (?)", trigrams],
-                                         :group => fuzzy_ref_id.to_s)
+        :group => fuzzy_ref_id.to_s)
 
-      count = 0
-      @res = []
-      trigram_groups.sort_by {|a| -a[1]}.each do |group|
-        @res << self.find(group[0])
-        count += 1
-        break if count == limit
-      end
-      @res
+      #sorts by score, gets top scorers, returns simple array of sorted ids
+      top_ids = trigram_groups.sort_by {|a| -a[1]}.first(limit).map {|a| a[0]}
+
+      #get the unsorted objects in one query
+      unsorted_res = self.find(top_ids)
+
+      #sort objects according to sorted ids
+      @res = top_ids.map{|id| unsorted_res.detect{|res| res.id == id}}
     end
   end
 end
