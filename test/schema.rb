@@ -3,9 +3,19 @@ ActiveRecord::Schema.define(:version => 0) do
     t.string :name
   end
 
-  create_table :package_trigrams, :force => true do |t|
+  create_table :trigrams_for_packages, :force => true do |t|
     t.integer :package_id
     t.string :tg
-    t.integer :score
+    t.integer :score, :default => 1
+  end
+  
+  create_table :items, :force => true do |t|
+    t.string :name
+  end
+
+  create_table :trigrams_for_namespaced_items, :force => true do |t|
+    t.integer :item_id
+    t.string :tg
+    t.integer :score, :default => 1
   end
 end
