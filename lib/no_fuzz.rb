@@ -10,31 +10,23 @@ module NoFuzz
   end
 
   module ClassMethods
-    def self.extended(model)
-      @@model = model
-    end
 
     def fuzzy(*fields)
-      # put the parameters as instance variable of the model
-      @@model.instance_variable_set(:@fuzzy_fields, fields)
-      @@model.instance_variable_set(:@fuzzy_ref_id, "#{@@model.to_s.demodulize.underscore}_id")
-      @@model.instance_variable_set(:@fuzzy_trigram_model, "#{@@model}Trigram".constantize)
+      @fuzzy_fields = fields
+      @fuzzy_ref_id = "#{belongs_to_association}_id"
+      @fuzzy_trigram_model = trigram_model
     end
 
     def populate_trigram_index
       clear_trigram_index
-
-      fuzzy_ref_id = self.instance_variable_get(:@fuzzy_ref_id)
-      trigram_model = self.instance_variable_get(:@fuzzy_trigram_model)
-      fields = self.instance_variable_get(:@fuzzy_fields)
-
-      fields.each do |f|
+      
+      @fuzzy_fields.each do |f|
         self.all.each do |i|
           word = ' ' + i.send(f)
           (0..word.length-3).each do |idx|
-            tg = word[idx,3].downcase # Force normalization by downcasing for
-            # now - should be overridable by the user
-            trigram_model.create(:tg => tg, fuzzy_ref_id => i.id)
+            tg = word[idx,3].downcase
+               # Force normalization by downcasing for now - should be overridable by the user
+            @fuzzy_trigram_model.create(:tg => tg, @fuzzy_ref_id => i.id)
           end
         end
       end
@@ -42,29 +34,34 @@ module NoFuzz
     end
 
     def clear_trigram_index
-      self.instance_variable_get(:@fuzzy_trigram_model).delete_all
+      @fuzzy_trigram_model.delete_all
     end
 
-    def fuzzy_find(word, limit = 0)
-      fuzzy_ref_id = self.instance_variable_get(:@fuzzy_ref_id)
-      trigram_model = self.instance_variable_get(:@fuzzy_trigram_model)
-      #fields = self.instance_variable_get(:@fuzzy_fields)
-
-      word = ' ' + word + ' '
-      trigrams = (0..word.length-3).collect { |idx| word[idx,3] }
-
-      # ordered hash of package_id => score pairs
-      trigram_groups = trigram_model.sum(:score, :conditions => [ "tg IN (?)", trigrams],
-        :group => fuzzy_ref_id.to_s)
-
-      #sorts by score, gets top scorers, returns simple array of sorted ids
-      top_ids = trigram_groups.sort_by {|a| -a[1]}.first(limit).map {|a| a[0]}
-
-      #get the unsorted objects in one query
-      unsorted_res = self.find(top_ids)
-
-      #sort objects according to sorted ids
-      @res = top_ids.map{|id| unsorted_res.detect{|res| res.id == id}}
+    def fuzzy_find(word, limit = 0)      
+      word = " #{word} "
+      trigram_list = (0..word.length-3).collect { |idx| word[idx,3] }
+      trigrams = @fuzzy_trigram_model.where(["tg IN (?)", trigram_list])
+      trigrams = trigrams.group(@fuzzy_ref_id)
+      trigrams = trigrams.order('SUM(score) DESC')
+      trigrams = trigrams.includes(belongs_to_association)
+      trigrams = trigrams.limit(limit) if limit > 0
+      trigrams.all.collect do |trigram|
+         trigram.send(belongs_to_association)
+      end
     end
+
+    private
+
+    def trigram_model
+      "Trigrams::#{self.to_s.underscore.gsub('/','_').classify}".constantize
+    end
+    
+    def belongs_to_association
+      self.to_s.demodulize.downcase
+    end
+
   end
+
+
+
 end
