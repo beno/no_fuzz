@@ -1,22 +1,21 @@
 # -*- coding: utf-8 -*-
-require 'rubygems'
 require 'rake'
 require 'rake/testtask'
 require 'rake/rdoctask'
 #require 'spec/rake/spectask'
-require 'echoe'
+#require 'echoe'
 
 desc 'Default: run unit tests.'
 task :default => :test
 
-Echoe.new('no_fuzz') do |p|
-  p.author = "Bjørn Arild Mæland"
-  p.email = "bjorn.maeland@gmail.com"
-  p.summary = "No Fuzz"
-  p.url = "http://github.com/Chrononaut/no_fuzz"
-  p.ignore_pattern = FileList[".gitignore"]
-  p.include_rakefile = true
-end
+# Echoe.new('no_fuzz') do |p|
+#   p.author = "Bjørn Arild Mæland"
+#   p.email = "bjorn.maeland@gmail.com"
+#   p.summary = "No Fuzz"
+#   p.url = "http://github.com/Chrononaut/no_fuzz"
+#   p.ignore_pattern = FileList[".gitignore"]
+#   p.include_rakefile = true
+# end
 
 desc 'Test the no_fuzz plugin.'
 Rake::TestTask.new(:test) do |t|
