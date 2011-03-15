@@ -66,9 +66,13 @@ class NoFuzzGenerator < Rails::Generators::Base
   end
 
   def index_key_spec
-    if (table_name.size + foreign_key.size) > (MAX_INDEX_KEY_LENGTH - 4)
-      ", :name => :index_on_#{foreign_key}"
+    key_spec, max_length = '', MAX_INDEX_KEY_LENGTH - 10 # subtract "index_" and "_on_"
+    if (table_name.size + foreign_key.size) > max_length
+      max_table_length = max_length - foreign_key.size
+      shortened_table_name = table_name[0..(max_table_length-1)]
+      key_spec = ", :name => :index_#{shortened_table_name}_on_#{foreign_key}"
     end
+    key_spec
   end
 
 end
