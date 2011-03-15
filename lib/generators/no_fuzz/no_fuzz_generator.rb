@@ -13,17 +13,6 @@ class NoFuzzGenerator < Rails::Generators::Base
     end
   end
   
-  def wtf
-    puts "model_name: #{model_name}"
-    puts "downcased_name: #{downcased_name}"
-    puts "class_name: #{class_name}"
-    puts "belongs_to_association: #{belongs_to_association.to_s}"
-    puts "flattened_class_name: #{flattened_class_name}"
-    puts "migration_class_name: #{migration_class_name}"
-    puts "table_name: #{table_name}"
-    puts "foreign_key: #{foreign_key}"
-  end
-
   def create_module
     template "module.rb", "app/models/trigrams.rb"
   end
