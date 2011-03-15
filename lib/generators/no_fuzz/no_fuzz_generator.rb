@@ -61,7 +61,7 @@ class NoFuzzGenerator < Rails::Generators::Base
   end
   
   def foreign_key
-     downcased_name + "_id"
+     belongs_to_association + "_id"
   end
   
 end
