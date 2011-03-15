@@ -1,6 +1,7 @@
 require 'test_helper.rb'
 require 'no_fuzz'
 require 'rails/generators'
+require 'rails/generators/test_case'
 # require 'rails_generator/scripts/generate'
 require 'generators/no_fuzz/no_fuzz_generator'
 
@@ -71,13 +72,16 @@ class NoFuzzTest < ActiveSupport::TestCase
 
 end
 
-# class GeneratorHelpersTest < Test::Unit::TestCase
-#   include GeneratorHelpers
-# 
-#   def test_graceful_pluralization
-#     ActiveRecord::Base.pluralize_table_names = false
-#     assert_equal "chicken", gracefully_pluralize("chicken")
-#     ActiveRecord::Base.pluralize_table_names = true
-#     assert_equal "chickens", gracefully_pluralize("chicken")
-#   end
-# end
+class NoFuzzGeneratorTest < Rails::Generators::TestCase
+  tests NoFuzzGenerator
+  destination File.expand_path("../tmp", File.dirname(__FILE__))
+  setup :prepare_destination
+
+  test "Assert all files are properly created" do
+    run_generator %w(package)
+    assert_file "app/models/trigrams.rb", /def self.table_name_prefix/
+    assert_file "app/models/trigrams/package.rb", /belongs_to :package, :class_name => "::Package"/
+    assert_migration "db/migrate/create_trigrams_table_for_package.rb", /create_table :trigrams_for_packages/
+  end
+
+end
