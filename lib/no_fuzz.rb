@@ -7,14 +7,15 @@
 module NoFuzz
   def self.included(model)
     model.extend ClassMethods
+    model.has_many :trigrams, :class_name => model.trigram_model
   end
 
   module ClassMethods
 
     def fuzzy(*fields)
       @fuzzy_fields = fields
-      @fuzzy_ref_id = "#{belongs_to_association}_id"
-      @fuzzy_trigram_model = trigram_model
+      @fuzzy_ref_id = reflect_on_association(:trigrams).primary_key_name
+      @fuzzy_trigram_model = reflect_on_association(:trigrams).class_name.constantize
     end
 
     def populate_trigram_index
@@ -22,7 +23,7 @@ module NoFuzz
       
       @fuzzy_fields.each do |f|
         self.all.each do |i|
-          word = ' ' + i.send(f)
+          word = ' ' + i.send(f).to_s
           (0..word.length-3).each do |idx|
             tg = word[idx,3].downcase
                # Force normalization by downcasing for now - should be overridable by the user
@@ -49,15 +50,15 @@ module NoFuzz
          trigram.send(belongs_to_association)
       end
     end
-
-    private
-
+    
     def trigram_model
-      "Trigrams::#{self.to_s.underscore.gsub('/','_').classify}".constantize
+      "::Trigrams::#{self.to_s.pluralize.underscore.gsub('/', '_').classify}"
     end
     
+    private
+    
     def belongs_to_association
-      self.to_s.demodulize.downcase
+      self.to_s.demodulize.underscore.to_sym
     end
 
   end
