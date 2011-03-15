@@ -6,7 +6,7 @@ class <%= migration_class_name -%> < ActiveRecord::Migration
       t.integer :score, :default => 1, :null => false
     end
     add_index :<%= table_name -%>, :tg
-    add_index :<%= table_name -%>, :<%= foreign_key %>
+    add_index :<%= table_name -%>, :<%= foreign_key %><%= index_key_spec %>
   end
 
   def self.down

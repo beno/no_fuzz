@@ -1,6 +1,7 @@
 class NoFuzzGenerator < Rails::Generators::Base
   include Rails::Generators::Migration
   
+  MAX_INDEX_KEY_LENGTH = 64
   source_root File.expand_path('../templates', __FILE__)
   argument :model_name, :type => :string
   
@@ -62,6 +63,12 @@ class NoFuzzGenerator < Rails::Generators::Base
   
   def foreign_key
      belongs_to_association.to_s + "_id"
+  end
+  
+  def index_key_spec
+    if (table_name.size + foreign_key.size) > (MAX_INDEX_KEY_LENGTH - 4)
+      ", :name => :index_on_#{foreign_key}"
+    end
   end
   
 end
